@@ -46,6 +46,10 @@ def index(request):
                 "name": "Sintel trailer",
                 "url": "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
             },
+            {
+                "name": "YouTube iframe sample",
+                "url": "https://www.youtube.com/watch?v=M7lc1UVf-VE",
+            },
         ],
     }
     return render(request, "demo/index.html", context)

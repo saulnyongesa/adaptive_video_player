@@ -15,6 +15,7 @@ This repository also includes a runnable Django demo project so you can test the
 - Modern controls: play, seek, mute, volume, quality, picture-in-picture, fullscreen.
 - Reusable Django inclusion tag.
 - Vanilla JavaScript API for non-Django pages.
+- Demo support for YouTube links through YouTube's official iframe embed player.
 
 ## Install
 
@@ -46,8 +47,8 @@ These steps work on a fresh machine with Python 3.9+ and Git installed.
 ### macOS or Linux
 
 ```bash
-git clone https://github.com/your-org/django-adaptive-video-player.git
-cd django-adaptive-video-player
+git clone https://github.com/saulnyongesa/adaptive_video_player.git
+cd adaptive_video_player
 
 python3 -m venv .venv
 source .venv/bin/activate
@@ -68,8 +69,8 @@ http://127.0.0.1:8000/
 ### Windows PowerShell
 
 ```powershell
-git clone https://github.com/your-org/django-adaptive-video-player.git
-cd django-adaptive-video-player
+git clone https://github.com/saulnyongesa/adaptive_video_player.git
+cd adaptive_video_player
 
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
@@ -96,6 +97,68 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Then activate the virtual environment again.
 
 The demo uses public HLS test streams, so you do not need to generate video files before testing. To test your own stream, edit `demo/views.py` and replace `default_stream` with the URL to your `.m3u8` master playlist.
+
+### Add Test Streams To The Demo
+
+For a quick test, open the demo page and paste any public HLS playlist URL into the stream input:
+
+```text
+https://example.com/path/to/master.m3u8
+```
+
+The same input also accepts YouTube links such as:
+
+```text
+https://www.youtube.com/watch?v=M7lc1UVf-VE
+https://youtu.be/M7lc1UVf-VE
+https://www.youtube.com/shorts/VIDEO_ID
+```
+
+For permanent sample buttons, edit `demo/views.py` and add entries to `sample_streams`:
+
+```python
+"sample_streams": [
+    {
+        "name": "My test stream",
+        "url": "https://example.com/video/master.m3u8",
+    },
+    {
+        "name": "YouTube sample",
+        "url": "https://www.youtube.com/watch?v=M7lc1UVf-VE",
+    },
+]
+```
+
+Restart the Django server after changing Python files:
+
+```bash
+python manage.py runserver
+```
+
+### Test With An Uploaded File
+
+The demo page includes an upload form for normal video files such as `.mp4`, `.webm`, `.mov`, `.m4v`, and `.ogg`.
+
+Uploaded files are saved to:
+
+```text
+media/uploads/
+```
+
+This upload path tests the player controls with a direct video file. It is not adaptive bitrate playback yet. For real adaptive playback, convert the video to HLS with FFmpeg and load the generated `master.m3u8`.
+
+### YouTube Links
+
+YouTube videos cannot be loaded directly into the custom HTML `<video>` HLS player as raw media files. YouTube does not expose normal cross-origin MP4/HLS URLs for arbitrary public videos in the way this player expects.
+
+The Django demo handles YouTube links by detecting the video ID and switching to a YouTube `<iframe>` embed. This follows the official YouTube embed approach documented in the [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference) and [YouTube player parameters](https://developers.google.com/youtube/player_parameters).
+
+That means:
+
+- HLS `.m3u8` links use the custom adaptive player.
+- Uploaded `.mp4`, `.webm`, `.mov`, `.m4v`, and `.ogg` files use the custom player as direct video files.
+- YouTube links use YouTube's embedded player inside the same demo page.
+- The custom controls and quality selector do not control YouTube playback; YouTube owns that iframe player.
 
 ## Django Usage
 

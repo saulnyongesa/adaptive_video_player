@@ -64,13 +64,41 @@
         background: rgba(11, 13, 15, 0.72);
       }
 
-      .stream-list {
+      .youtube-player {
+        display: none;
+        width: min(100%, 1040px);
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        background: #050607;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.32);
+      }
+
+      .youtube-player.is-active {
+        display: block;
+      }
+
+      .youtube-player iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
+      .stream-list,
+      .stream-form,
+      .upload-form {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+        align-items: center;
       }
 
-      .stream-list button {
+      .stream-list button,
+      .stream-form button,
+      .upload-form button,
+      .stream-form input,
+      .upload-form input {
         min-height: 40px;
         border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 8px;
@@ -81,10 +109,32 @@
         cursor: pointer;
       }
 
+      .stream-form input,
+      .upload-form input {
+        flex: 1 1 320px;
+        min-width: 0;
+        padding: 0 12px;
+        cursor: text;
+      }
+
+      .upload-form input {
+        padding-top: 8px;
+      }
+
       .stream-list button:hover,
-      .stream-list button:focus-visible {
+      .stream-list button:focus-visible,
+      .stream-form button:hover,
+      .stream-form button:focus-visible,
+      .upload-form button:hover,
+      .upload-form button:focus-visible,
+      .stream-form input:focus-visible,
+      .upload-form input:focus-visible {
         border-color: #35c2a1;
         outline: none;
+      }
+
+      .status {
+        color: #f2b84b;
       }
 
       code {
@@ -98,38 +148,127 @@
         <h1>Django HLS adaptive video player</h1>
         <p>
           This demo project renders the reusable Django template tag and serves the packaged static files.
-          The default stream is public, so you can test the player immediately after starting Django.
+          The default stream is public, and the URL box also accepts YouTube links through an embedded player.
         </p>
       </header>
 
       {% adaptive_video_player default_stream title="Django demo stream" player_id="demo-player" %}
+      <section class="youtube-player" id="youtube-player" aria-label="YouTube player"></section>
 
       <section class="panel" aria-labelledby="streams-heading">
         <h2 id="streams-heading">Test streams</h2>
-        <p>Select a sample playlist or replace the tag source with your own <code>.m3u8</code> URL.</p>
+        <p>Select a sample playlist, paste your own <code>.m3u8</code> URL, or paste a YouTube video link.</p>
         <div class="stream-list">
           {% for stream in sample_streams %}
-            <button type="button" data-stream-url="{{ stream.url }}">{{ stream.name }}</button>
+            <button type="button" data-stream-url="{{ stream.url }}" data-stream-title="{{ stream.name }}">{{ stream.name }}</button>
           {% endfor %}
         </div>
+        <form class="stream-form" id="stream-form">
+          <input id="stream-url" type="url" placeholder="https://example.com/video/master.m3u8 or https://youtu.be/VIDEO_ID" aria-label="Video URL">
+          <button type="submit">Load URL</button>
+        </form>
+      </section>
+
+      <section class="panel" aria-labelledby="upload-heading">
+        <h2 id="upload-heading">Upload a local video</h2>
+        <p>Upload a normal video file to test the controls. Adaptive quality switching still needs an HLS <code>.m3u8</code> playlist.</p>
+        <form class="upload-form" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="file" name="video_file" accept="video/mp4,video/webm,video/ogg,video/quicktime,.m4v" aria-label="Video file">
+          <button type="submit">Upload and test</button>
+        </form>
+        {% if upload_error %}
+          <p class="status">{{ upload_error }}</p>
+        {% endif %}
       </section>
     </main>
 
     <script>
+      const playerRoot = document.getElementById("demo-player");
+      const youtubeRoot = document.getElementById("youtube-player");
+
+      function getYouTubeId(url) {
+        try {
+          const parsed = new URL(url);
+          const host = parsed.hostname.replace(/^www\./, "");
+
+          if (host === "youtu.be") {
+            return parsed.pathname.split("/").filter(Boolean)[0] || "";
+          }
+
+          if (host === "youtube.com" || host === "youtube-nocookie.com" || host.endsWith(".youtube.com")) {
+            if (parsed.searchParams.get("v")) return parsed.searchParams.get("v");
+
+            const parts = parsed.pathname.split("/").filter(Boolean);
+            const marker = ["embed", "shorts", "live"].find((item) => parts.includes(item));
+            if (marker) return parts[parts.indexOf(marker) + 1] || "";
+          }
+        } catch (error) {
+          return "";
+        }
+
+        return "";
+      }
+
+      function showNativePlayer() {
+        youtubeRoot.classList.remove("is-active");
+        youtubeRoot.innerHTML = "";
+        playerRoot.style.display = "";
+      }
+
+      function showYouTubePlayer(videoId, title) {
+        if (!videoId) return;
+        playerRoot.avp?.destroyHls?.();
+        playerRoot.querySelector("video").pause();
+        playerRoot.style.display = "none";
+        youtubeRoot.classList.add("is-active");
+        youtubeRoot.innerHTML = "";
+
+        const iframe = document.createElement("iframe");
+        iframe.title = title || "YouTube video player";
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+        iframe.allowFullscreen = true;
+        iframe.referrerPolicy = "strict-origin-when-cross-origin";
+        iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?rel=0&playsinline=1`;
+        youtubeRoot.appendChild(iframe);
+      }
+
+      function loadDemoSource(url, title) {
+        if (!url || !window.AdaptiveVideoPlayer) return;
+        const youtubeId = getYouTubeId(url);
+        if (youtubeId) {
+          showYouTubePlayer(youtubeId, title);
+          return;
+        }
+
+        showNativePlayer();
+        if (!playerRoot.avp) {
+          playerRoot.dataset.avpReady = "true";
+          playerRoot.avp = new window.AdaptiveVideoPlayer(playerRoot, { src: url });
+          if (title) {
+            const titleNode = playerRoot.querySelector(".avp__title");
+            if (titleNode) titleNode.textContent = title;
+          }
+        } else {
+          playerRoot.avp.setSource(url, { title });
+        }
+      }
+
       document.querySelectorAll("[data-stream-url]").forEach((button) => {
         button.addEventListener("click", () => {
-          const root = document.getElementById("demo-player");
-          const video = root.querySelector("video");
-          root.avp?.destroy();
-          root.dataset.src = button.dataset.streamUrl;
-          root.dataset.avpReady = "";
-          video.pause();
-          video.removeAttribute("src");
-          video.load();
-          root.avp = new window.AdaptiveVideoPlayer(root, { src: button.dataset.streamUrl });
+          loadDemoSource(button.dataset.streamUrl, button.dataset.streamTitle);
         });
       });
+
+      document.getElementById("stream-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = document.getElementById("stream-url");
+        loadDemoSource(input.value.trim(), "Custom video URL");
+      });
+
+      {% if uploaded_video_url %}
+        loadDemoSource("{{ uploaded_video_url }}", "Uploaded video file");
+      {% endif %}
     </script>
   </body>
 </html>
-

@@ -31,8 +31,8 @@ classifiers = [
 dependencies = ["Django>=4.2"]
 
 [project.urls]
-Homepage = "https://github.com/your-org/django-adaptive-video-player"
-Issues = "https://github.com/your-org/django-adaptive-video-player/issues"
+Homepage = "https://github.com/saulnyongesa/adaptive_video_player"
+Issues = "https://github.com/saulnyongesa/adaptive_video_player/issues"
 
 [tool.setuptools.packages.find]
 include = ["adaptive_video_player*"]
@@ -42,4 +42,3 @@ adaptive_video_player = [
   "static/adaptive_video_player/*",
   "templates/adaptive_video_player/*",
 ]
-
