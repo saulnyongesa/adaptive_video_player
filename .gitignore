@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Django/local media
+db.sqlite3
+media/
+staticfiles/
+.env
+.env.*
+
+# Editors and OS files
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+

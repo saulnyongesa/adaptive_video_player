@@ -1,0 +1,52 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'adaptive_video_player/player.css' %}">
+
+<div
+  class="avp"
+  {% if player_id %}id="{{ player_id }}"{% endif %}
+  data-adaptive-player
+  data-src="{{ src }}"
+  data-title="{{ title }}"
+  data-controls="{{ controls|yesno:'true,false' }}"
+>
+  <video
+    class="avp__video"
+    playsinline
+    preload="metadata"
+    {% if poster %}poster="{{ poster }}"{% endif %}
+    {% if autoplay %}autoplay{% endif %}
+    {% if muted %}muted{% endif %}
+  ></video>
+
+  <div class="avp__topbar">
+    <span class="avp__title">{{ title }}</span>
+    <span class="avp__metric" data-avp-speed>-- Mbps</span>
+  </div>
+
+  <div class="avp__controls" data-avp-controls>
+    <button class="avp__button" type="button" data-avp-play aria-label="Play">
+      <i data-lucide="play"></i>
+    </button>
+    <span class="avp__time" data-avp-current>0:00</span>
+    <input class="avp__range avp__timeline" type="range" min="0" max="1000" value="0" data-avp-timeline aria-label="Seek">
+    <span class="avp__time" data-avp-duration>0:00</span>
+    <button class="avp__button" type="button" data-avp-mute aria-label="Mute">
+      <i data-lucide="volume-2"></i>
+    </button>
+    <input class="avp__range avp__volume" type="range" min="0" max="1" step="0.01" value="1" data-avp-volume aria-label="Volume">
+    <select class="avp__select" data-avp-quality aria-label="Quality">
+      <option value="-1">Auto</option>
+    </select>
+    <button class="avp__button" type="button" data-avp-pip aria-label="Picture in picture">
+      <i data-lucide="picture-in-picture-2"></i>
+    </button>
+    <button class="avp__button" type="button" data-avp-fullscreen aria-label="Fullscreen">
+      <i data-lucide="maximize"></i>
+    </button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="{% static 'adaptive_video_player/player.js' %}"></script>
+

@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+recursive-include adaptive_video_player/static *
+recursive-include adaptive_video_player/templates *
+recursive-include examples *
+
