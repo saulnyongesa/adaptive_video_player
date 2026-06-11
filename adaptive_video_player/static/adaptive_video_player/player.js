@@ -39,7 +39,39 @@
       this.renderIcons();
     }
 
+    setSource(src, options = {}) {
+      if (!src) return;
+      this.src = src;
+      this.root.dataset.src = src;
+      this.levels = [];
+      this.speedMbps = 0;
+      this.root.dataset.level = "";
+      this.video.pause();
+      this.video.removeAttribute("src");
+      this.video.load();
+      this.load();
+
+      if (options.title) {
+        const title = this.root.querySelector(".avp__title");
+        if (title) title.textContent = options.title;
+        this.root.dataset.title = options.title;
+      }
+    }
+
     load() {
+      this.destroyHls();
+      this.populateQualityMenu([]);
+      this.setSpeedLabel("-- Mbps");
+
+      if (!this.isHlsSource(this.src)) {
+        this.video.src = this.src;
+        this.setSpeedLabel("Direct file");
+        if (this.controls.quality) this.controls.quality.disabled = true;
+        return;
+      }
+
+      if (this.controls.quality) this.controls.quality.disabled = false;
+
       if (this.video.canPlayType("application/vnd.apple.mpegurl")) {
         this.video.src = this.src;
         this.setSpeedLabel("Native HLS");
@@ -62,7 +94,7 @@
 
       this.hls.on(window.Hls.Events.MANIFEST_PARSED, (_, data) => {
         this.levels = data.levels || [];
-        this.populateQualityMenu();
+        this.populateQualityMenu(this.levels);
       });
 
       this.hls.on(window.Hls.Events.LEVEL_SWITCHED, (_, data) => {
@@ -128,10 +160,14 @@
       }
     }
 
-    populateQualityMenu() {
+    isHlsSource(src) {
+      return /\.m3u8($|\?)/i.test(src);
+    }
+
+    populateQualityMenu(levels = this.levels) {
       if (!this.controls.quality) return;
       this.controls.quality.innerHTML = '<option value="-1">Auto</option>';
-      this.levels.forEach((level, index) => {
+      levels.forEach((level, index) => {
         const option = document.createElement("option");
         option.value = String(index);
         option.textContent = `${level.height || "?"}p`;
@@ -238,9 +274,16 @@
       return `${minutes}:${String(remainder).padStart(2, "0")}`;
     }
 
+    destroyHls() {
+      if (this.hls) {
+        this.hls.destroy();
+        this.hls = null;
+      }
+    }
+
     destroy() {
       clearTimeout(this.idleTimer);
-      if (this.hls) this.hls.destroy();
+      this.destroyHls();
     }
   }
 

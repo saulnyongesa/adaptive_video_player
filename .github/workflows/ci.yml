@@ -23,8 +23,10 @@ jobs:
         run: python -m pip install -e .
 
       - name: Compile Python files
-        run: python -m compileall adaptive_video_player
+        run: python -m compileall adaptive_video_player demo demo_project
 
       - name: Check JavaScript syntax
         run: node --check adaptive_video_player/static/adaptive_video_player/player.js
 
+      - name: Check Django demo project
+        run: python manage.py check

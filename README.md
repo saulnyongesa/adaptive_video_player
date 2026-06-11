@@ -4,6 +4,8 @@ A modern, reusable HLS adaptive video player for Django projects. It ships as a 
 
 The player expects an HLS master playlist (`.m3u8`). HLS is the best practical default for Django because the chunks are ordinary static/media files and the browser can request them over normal HTTP.
 
+This repository also includes a runnable Django demo project so you can test the player before installing it into another app.
+
 ## Features
 
 - HLS playback with `hls.js` and native Safari fallback.
@@ -36,6 +38,64 @@ INSTALLED_APPS = [
 ```
 
 Make sure Django static files are configured. In development, `runserver` will serve app static files when `django.contrib.staticfiles` is installed.
+
+## Run The Django Demo Project
+
+These steps work on a fresh machine with Python 3.9+ and Git installed.
+
+### macOS or Linux
+
+```bash
+git clone https://github.com/your-org/django-adaptive-video-player.git
+cd django-adaptive-video-player
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+python -m pip install --upgrade pip
+python -m pip install -e .
+
+python manage.py migrate
+python manage.py runserver
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000/
+```
+
+### Windows PowerShell
+
+```powershell
+git clone https://github.com/your-org/django-adaptive-video-player.git
+cd django-adaptive-video-player
+
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+python -m pip install --upgrade pip
+python -m pip install -e .
+
+python manage.py migrate
+python manage.py runserver
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000/
+```
+
+If PowerShell blocks virtual environment activation, run:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Then activate the virtual environment again.
+
+The demo uses public HLS test streams, so you do not need to generate video files before testing. To test your own stream, edit `demo/views.py` and replace `default_stream` with the URL to your `.m3u8` master playlist.
 
 ## Django Usage
 
@@ -126,6 +186,9 @@ Use `/media/videos/demo/master.m3u8` as the player source.
 ## Repository Layout
 
 ```text
+manage.py
+demo_project/
+demo/
 adaptive_video_player/
   static/adaptive_video_player/player.css
   static/adaptive_video_player/player.js
@@ -137,4 +200,3 @@ examples/vanilla-demo/index.html
 ## License
 
 MIT
-
